@@ -1,6 +1,6 @@
 import re
 from urllib.parse import urlparse
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Comment
 
 # list of valid domains to check for
 valid_domains = [
@@ -27,30 +27,40 @@ def extract_next_links(url, resp):
             resp.raw_response.content: the content of the page!
     Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
     """
-    url_links = [] # the compiler that collects all of the links embedded on the current web page
+    unique_links = set()
 
-    # ensures that the site's response is okay
+    # ensures that the status is ok
     if resp.status != 200: 
         print(f'An error has occured: Received response status {resp.status} for URL {url}')
-        return url_links
+        return list()
     
-    # ensures that the site's content is not empty
+    # ensures that the content is not empty
     if not resp.raw_response or not resp.raw_response.content:
         print(f'There is no content find this URL {url}')
-        return url_links
+        return list()
     
-    # the soup parser object to be iterated through to find all of the links
-    soup_obj = BeautifulSoup(resp.raw_response.content, "html.parser")
+    soup_obj = BeautifulSoup(resp.raw_response.content, "lxml")
 
-    # finding all links and validating it
-    for link in soup_obj.find_all("a", href = True):
+    # removes all comment from the html file
+    for comment in soup_obj.find_all(text = lambda text: isinstance(text, Comment)):
+        comment.extract()
+
+    # removes all <script> and <style> tags
+    for tag_element in soup_obj.find_all(['script', 'style']):  
+        tag_element.extract()
+
+    # raw_text = soup_obj.get_text()
+    # main_text = re.sub('\s+', ' ', raw_text)
+
+    for link in soup_obj.find_all('a'):
         current_link = link["href"]
         full_link = urlparse(current_link).geturl()
-        if is_valid(full_link):
-            url_links.append(full_link)
+        unique_links.add(full_link)
 
-    return url_links
-    
+    return list(unique_links)
+
+
+
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
