@@ -2,6 +2,15 @@ import re
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 
+# list of valid domains to check for
+valid_domains = [
+    "ics.uci.edu",
+    "cs.uci.edu",
+    "informatics.uci.edu",
+    "stat.uci.edu",
+    "today.uci.edu/department/information_computer_sciences"
+]
+
 def scraper(url, resp):
     links = extract_next_links(url, resp)
     return [link for link in links if is_valid(link)]
@@ -49,9 +58,18 @@ def is_valid(url):
     # There are already some conditions that return False.
     try:
         parsed = urlparse(url)
-        if parsed.scheme not in set(["http", "https"]):
+
+        # conditions that would lead to the current link invalid
+        if parsed.scheme not in set(["http", "https"]): # ensures that it is using a secure scheme
             return False
-        return not re.match(
+        
+        if parsed.netloc not in valid_domains: 
+            return False
+        
+        if any(substring in url for substring in ("?share=", "pdf", "redirect", "#comment", "#respond", "#comments")):
+            return False
+        
+        if re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
             + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
@@ -59,7 +77,10 @@ def is_valid(url):
             + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
             + r"|epub|dll|cnf|tgz|sha1"
             + r"|thmx|mso|arff|rtf|jar|csv"
-            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
+            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower()): return False
+        
+        # url is valid if it passes all the conditions above
+        return True
 
     except TypeError:
         print ("TypeError for ", parsed)
