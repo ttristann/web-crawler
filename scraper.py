@@ -1,21 +1,47 @@
 import re
 from urllib.parse import urlparse
+from bs4 import BeautifulSoup
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
     return [link for link in links if is_valid(link)]
 
 def extract_next_links(url, resp):
-    # Implementation required.
-    # url: the URL that was used to get the page
-    # resp.url: the actual url of the page
-    # resp.status: the status code returned by the server. 200 is OK, you got the page. Other numbers mean that there was some kind of problem.
-    # resp.error: when status is not 200, you can check the error here, if needed.
-    # resp.raw_response: this is where the page actually is. More specifically, the raw_response has two parts:
-    #         resp.raw_response.url: the url, again
-    #         resp.raw_response.content: the content of the page!
-    # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
-    return list()
+    """
+    Implementation required.
+    url: the URL that was used to get the page
+    resp.url: the actual url of the page
+    resp.status: the status code returned by the server. 200 is OK, you got the page. Other numbers mean that there was some kind of problem.
+    resp.error: when status is not 200, you can check the error here, if needed.
+    resp.raw_response: this is where the page actually is. More specifically, the raw_response has two parts:
+            resp.raw_response.url: the url, again
+            resp.raw_response.content: the content of the page!
+    Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
+    """
+    url_links = [] # the compiler that collects all of the links embedded on the current web page
+
+    # ensures that the site's response is okay
+    if resp.status != 200: 
+        print(f'An error has occured: Received response status {resp.status} for URL {url}')
+        return url_links
+    
+    # ensures that the site's content is not empty
+    if not resp.raw_response or not resp.raw_response.content:
+        print(f'There is no content find this URL {url}')
+        return url_links
+    
+    # the soup parser object to be iterated through to find all of the links
+    soup_obj = BeautifulSoup(resp.raw_response.content, "html.parser")
+
+    # finding all links and validating it
+    for link in soup_obj.find_all("a", href = True):
+        current_link = link["href"]
+        full_link = urlparse(current_link).geturl()
+        if is_valid(full_link):
+            url_links.append(full_link)
+
+    return url_links
+    
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
