@@ -53,7 +53,7 @@ def extract_next_links(url, resp):
     # main_text = re.sub('\s+', ' ', raw_text)
 
     for link in soup_obj.find_all('a'):
-        current_link = link["href"]
+        current_link = link.get('href')
         full_link = urlparse(current_link).geturl()
         unique_links.add(full_link)
 
