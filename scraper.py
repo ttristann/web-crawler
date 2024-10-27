@@ -2,6 +2,7 @@ import re
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup, Comment
 from database import Database as db
+from robot_parser import RobotParser 
 
 # list of valid domains to check for
 valid_domains = [
@@ -14,7 +15,28 @@ valid_domains = [
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
-    return [link for link in links if is_valid(link)]
+    valid_links = []
+    robot_parsers = {}
+
+    for link in links:
+        if is_valid(link):
+            # Get the root domain of the current link
+            root_domain = f"{urlparse(link).scheme}://{urlparse(link).netloc}"
+
+            # Check if RobotParser for this root domain already exists
+            if root_domain not in robot_parsers:
+                robot_parsers[root_domain] = RobotParser(root_domain)  # Create and cache the RobotParser
+
+            current_robot = robot_parsers[root_domain]
+
+            # Check if link is allowed by robots.txt and add to valid links if so
+            if current_robot.is_allowed(link):
+                valid_links.append(link)
+
+            # Append sitemaps (once per domain) to valid_links
+            valid_links.extend(current_robot.sitemaps)
+
+    return valid_links
 
 def extract_next_links(url, resp):
     """
