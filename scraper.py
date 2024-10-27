@@ -1,5 +1,6 @@
+
 import re
-from urllib.parse import urlparse, ParseResult
+from urllib.parse import urlparse
 from bs4 import BeautifulSoup, Comment
 from database import Database as db
 from robot_parser import RobotParser 
@@ -17,22 +18,24 @@ def scraper(url, resp):
     links = extract_next_links(url, resp)
     valid_links = []
     robot_parsers = {}
+
     for link in links:
         if is_valid(link):
-            # Get the root domain of the current link
+            # get the root domain of the current link
             root_domain = f"{urlparse(link).scheme}://{urlparse(link).netloc}"
 
-            # Check if RobotParser for this root domain already exists
+            # check if RobotParser for this root domain already exists
             if root_domain not in robot_parsers:
-                robot_parsers[root_domain] = RobotParser(root_domain)  # Create and cache the RobotParser
+                robot_parsers[root_domain] = RobotParser(root_domain)  # create and cache the RobotParser
 
             current_robot = robot_parsers[root_domain]
 
-            # Check if link is allowed by robots.txt and add to valid links if so
+            # check if link is allowed by robots.txt and add to valid links if so
             if current_robot.is_allowed(link):
                 valid_links.append(link)
+                print("ALLOWED BY THE ROBOTS.TXT")
 
-            # Append sitemaps (once per domain) to valid_links
+            # append sitemaps (once per domain) to valid_links
             valid_links.extend(current_robot.sitemaps)
 
     return valid_links
@@ -71,24 +74,30 @@ def extract_next_links(url, resp):
     # gets the actual text inside the HTML file
     raw_text = soup_obj.get_text()
     main_text = re.sub('\s+', ' ', raw_text)
-    print(f"LENGTH OF THE FILE: {len(main_text)}")
+
+    print(f"LENGTH OF THE MAIN TEXT: {len(main_text)}")
     # checks if the file has low contextual value
-    if len(main_text) < 150:
+    if len(main_text) < 150: ## TODO: change this to at 2000 or 3000 / 6987 and 6078 and 6048 and 6087 / ends with .ical -> blank page
         db.blacklist_links.add(url)
         return list()
 
-    links = db.find_unique_links(soup_obj)
-    return list(links)
+    ### TODO: need to accomodate to find unique links with fragments while using the database class
+    ### this code has to stay here -> urlparse has be called here if not, it goes into error that i dont know how to fix
+    main_set = set() # collects all of the links to be crawled
+    # iterates through soup obj to find and filter through the links
+    for link in soup_obj.find_all('a'):
+        current_link = link.get('href')
+        full_link = urlparse(current_link).geturl()
+        main_set.add(full_link)
+    
+    return list(main_set)
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
     # If you decide to crawl it, return True; otherwise return False.
     # There are already some conditions that return False.
     try:
-        if isinstance(url, str):
-            parsed = urlparse(url)
-        elif isinstance(url, ParseResult):
-            parsed = url  # use as-is if already parsed
+        parsed = urlparse(url)
 
         # conditions that would lead to the current link invalid
         if parsed.scheme not in set(["http", "https"]): # ensures that it is using a secure scheme
@@ -103,7 +112,7 @@ def is_valid(url):
         if any(substring in url for substring in ("?share=", "pdf", "redirect", "#comment", "#respond", "#comments")):
             return False
 
-        # add another if to check if the url is allowed to be crawled based on the robots.txt
+        # add another if to check if the url is allowed to be crawled based on the robots.txt?
         
         if re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
