@@ -19,25 +19,20 @@ def scraper(url, resp):
     robot_parsers = {}
     for link in links:
         if is_valid(link):
-            if isinstance(link, ParseResult):
-                parsed_link = link  # Use as-is if already parsed
-            else:
-                parsed_link = urlparse(link)  # Parse only if it's a string
-
             # get the root domain of the current link
-            root_domain = f"{parsed_link.scheme}://{parsed_link.netloc}"
+            root_domain = f"{urlparse(link).scheme}://{urlparse(link).netloc}"
 
-            # check if RobotParser for this root domain already exists
+            # Check if RobotParser for this root domain already exists
             if root_domain not in robot_parsers:
-                robot_parsers[root_domain] = RobotParser(root_domain)  # create and cache the RobotParser
+                robot_parsers[root_domain] = RobotParser(root_domain)  # Create and cache the RobotParser
 
             current_robot = robot_parsers[root_domain]
 
-            # check if link is allowed by robots.txt and add to valid links if so
+            # Check if link is allowed by robots.txt and add to valid links if so
             if current_robot.is_allowed(link):
                 valid_links.append(link)
 
-            # append sitemaps (once per domain) to valid_links
+            # Append sitemaps (once per domain) to valid_links
             valid_links.extend(current_robot.sitemaps)
 
     return valid_links
@@ -108,7 +103,7 @@ def is_valid(url):
         if any(substring in url for substring in ("?share=", "pdf", "redirect", "#comment", "#respond", "#comments")):
             return False
 
-        # add another if to check if the url is allowed to be crawled based on the robots.txt?
+        # add another if to check if the url is allowed to be crawled based on the robots.txt
         
         if re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
