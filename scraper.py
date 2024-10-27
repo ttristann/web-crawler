@@ -19,7 +19,7 @@ def scraper(url, resp):
     robot_parsers = {}
     for link in links:
         if is_valid(link):
-            # get the root domain of the current link
+            # Get the root domain of the current link
             root_domain = f"{urlparse(link).scheme}://{urlparse(link).netloc}"
 
             # Check if RobotParser for this root domain already exists

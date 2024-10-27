@@ -31,7 +31,7 @@ class RobotParser:
         return disallowed_paths, sitemaps
 
     def is_allowed(self, url):
-        # check if the URL path matches any disallowed paths
+        # Check if the URL path matches any disallowed paths
         parsed_url = urlparse(url)
         for path in self.disallowed_paths:
             if parsed_url.path.startswith(path):
