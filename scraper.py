@@ -1,6 +1,7 @@
 import re
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup, Comment
+import database as db
 
 # list of valid domains to check for
 valid_domains = [
@@ -27,19 +28,48 @@ def extract_next_links(url, resp):
             resp.raw_response.content: the content of the page!
     Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
     """
-    unique_links = set()
+    # unique_links = set()
 
     # ensures that the status is ok
-    if resp.status != 200: 
-        print(f'An error has occured: Received response status {resp.status} for URL {url}')
-        return list()
+    # if resp.status != 200: 
+    #     print(f'An error has occured: Received response status {resp.status} for URL {url}')
+    #     return list()
     
-    # ensures that the content is not empty
-    if not resp.raw_response or not resp.raw_response.content:
-        print(f'There is no content find this URL {url}')
-        return list()
+    # # ensures that the content is not empty
+    # if not resp.raw_response or not resp.raw_response.content:
+    #     print(f'There is no content find this URL {url}')
+    #     return list()
     
-    soup_obj = BeautifulSoup(resp.raw_response.content, "lxml")
+    # soup_obj = BeautifulSoup(resp.raw_response.content, "lxml")
+
+    # # removes all comment from the html file
+    # for comment in soup_obj.find_all(text = lambda text: isinstance(text, Comment)):
+    #     comment.extract()
+
+    # # removes all <script> and <style> tags
+    # for tag_element in soup_obj.find_all(['script', 'style']):  
+    #     tag_element.extract()
+
+    # # raw_text = soup_obj.get_text()
+    # # main_text = re.sub('\s+', ' ', raw_text)
+
+    # for link in soup_obj.find_all('a'):
+    #     current_link = link.get('href')
+    #     if current_link:
+    #         parsed_link = urlparse(current_link)
+    #         link_without_fragment = urlunparse(parsed_link._replace(fragment=''))
+    #         unique_links.add(link_without_fragment)
+
+    # checks status status of the response
+    if resp.status < 400 and resp.status >= 300:
+        try:
+            return list(resp.raw_response.url)
+        except:
+            pass # skips the url completely
+    if (not resp.raw_response) or (not resp.raw_response.content) or (resp.status != 200) or (url in db.crawled_links) or (url in db.blacklist_links): # checks if its blanks or have been crawled already
+        return list()
+
+    soup_obj = BeautifulSoup(resp.raw_response.content, "html.parser")
 
     # removes all comment from the html file
     for comment in soup_obj.find_all(text = lambda text: isinstance(text, Comment)):
@@ -49,15 +79,20 @@ def extract_next_links(url, resp):
     for tag_element in soup_obj.find_all(['script', 'style']):  
         tag_element.extract()
 
-    # raw_text = soup_obj.get_text()
-    # main_text = re.sub('\s+', ' ', raw_text)
+    # gets the actual text inside the HTML file
+    raw_text = soup_obj.get_text()
+    main_text = re.sub('\s+', ' ', raw_text)
 
-    for link in soup_obj.find_all('a'):
-        current_link = link.get('href')
-        full_link = urlparse(current_link).geturl()
-        unique_links.add(full_link)
+    # checks if the file has low contextual value
+    if len(main_text) < 150:
+        db.blacklist_url.add(url)
+        return list()
 
-    return list(unique_links)
+    links = db.find_unique_links(soup_obj)
+    return list(links)
+
+
+    
 
 
 
