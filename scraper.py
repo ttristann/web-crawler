@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup, Comment
 from database import Database as db
 from robot_parser import RobotParser 
 import nltk
+nltk.download('punkt')
 
 # list of valid domains to check for
 valid_domains = [
