@@ -1,5 +1,5 @@
 import re
-from urllib.parse import urlparse
+from urllib.parse import urlparse, ParseResult
 from bs4 import BeautifulSoup, Comment
 from database import Database as db
 from robot_parser import RobotParser 
@@ -17,11 +17,15 @@ def scraper(url, resp):
     links = extract_next_links(url, resp)
     valid_links = []
     robot_parsers = {}
-
     for link in links:
         if is_valid(link):
+            if isinstance(link, ParseResult):
+                parsed_link = link  # Use as-is if already parsed
+            else:
+                parsed_link = urlparse(link)  # Parse only if it's a string
+
             # get the root domain of the current link
-            root_domain = f"{urlparse(link).scheme}://{urlparse(link).netloc}"
+            root_domain = f"{parsed_link.scheme}://{parsed_link.netloc}"
 
             # check if RobotParser for this root domain already exists
             if root_domain not in robot_parsers:
@@ -72,7 +76,7 @@ def extract_next_links(url, resp):
     # gets the actual text inside the HTML file
     raw_text = soup_obj.get_text()
     main_text = re.sub('\s+', ' ', raw_text)
-
+    print(f"LENGTH OF THE FILE: {len(main_text)}")
     # checks if the file has low contextual value
     if len(main_text) < 150:
         db.blacklist_links.add(url)
@@ -86,7 +90,10 @@ def is_valid(url):
     # If you decide to crawl it, return True; otherwise return False.
     # There are already some conditions that return False.
     try:
-        parsed = urlparse(url)
+        if isinstance(url, str):
+            parsed = urlparse(url)
+        elif isinstance(url, ParseResult):
+            parsed = url  # use as-is if already parsed
 
         # conditions that would lead to the current link invalid
         if parsed.scheme not in set(["http", "https"]): # ensures that it is using a secure scheme

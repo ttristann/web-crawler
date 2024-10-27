@@ -1,6 +1,6 @@
 import re
 import requests
-from urllib.parse import urlparse, urljoin
+from urllib.parse import urlparse, urljoin, ParseResult
 
 class RobotParser:
     def __init__(self, url):
@@ -32,7 +32,11 @@ class RobotParser:
 
     def is_allowed(self, url):
         # check if the URL path matches any disallowed paths
-        parsed_url = urlparse(url)
+        # Ensure url is parsed only if it's a string
+        if isinstance(url, ParseResult):
+            parsed_url = url  # Use as-is if already parsed
+        else:
+            parsed_url = urlparse(url)  # Parse only if it's a string
         for path in self.disallowed_paths:
             if parsed_url.path.startswith(path):
                 return False
