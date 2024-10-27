@@ -1,7 +1,7 @@
 import re
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup, Comment
-import database as db
+from database import Database as db
 
 # list of valid domains to check for
 valid_domains = [
@@ -85,7 +85,7 @@ def extract_next_links(url, resp):
 
     # checks if the file has low contextual value
     if len(main_text) < 150:
-        db.blacklist_url.add(url)
+        db.blacklist_links.add(url)
         return list()
 
     links = db.find_unique_links(soup_obj)
