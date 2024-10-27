@@ -72,9 +72,14 @@ def is_valid(url):
         
         if parsed.netloc not in valid_domains: 
             return False
+
+        if url in db.blacklist_links: 
+            return False
         
         if any(substring in url for substring in ("?share=", "pdf", "redirect", "#comment", "#respond", "#comments")):
             return False
+
+        # add another if to check if the url is allowed to be crawled based on the robots.txt
         
         if re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
@@ -87,6 +92,9 @@ def is_valid(url):
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower()): return False
         
         # url is valid if it passes all the conditions above
+        # url can be added to the scraped
+        db.crawled_links.add(url)
+
         return True
 
     except TypeError:
