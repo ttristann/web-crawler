@@ -4,8 +4,8 @@ from urllib.parse import urlparse
 from bs4 import BeautifulSoup, Comment
 from database import Database as db
 from robot_parser import RobotParser 
-import nltk
-nltk.download('punkt')
+# import nltk
+# nltk.download('punkt')
 
 # list of valid domains to check for
 valid_domains = [
@@ -76,13 +76,13 @@ def extract_next_links(url, resp):
     raw_text = soup_obj.get_text(strip=True)
     main_text = re.sub(r"[^A-Za-z0-9\s]+", "", raw_text)
 
-    # print(f"LENGTH OF THE MAIN TEXT: {len(main_text)}")
+    print(f"LENGTH OF THE MAIN TEXT: {len(main_text)}")
     # # checks if the file has low contextual value
     # if len(main_text) < 150: ## TODO: change this to at 2000 or 3000 / 6987 and 6078 and 6048 and 6087 / ends with .ical -> blank page
     #     db.blacklist_links.add(url)
     #     return list()
 
-    if _is_low_contextual_value(main_text, soup_obj.find_all()):
+    if not _is_low_contextual_value(main_text, soup_obj.find_all()):
         db.blacklist_links.add(url)
         return list()
 
@@ -141,8 +141,7 @@ def is_valid(url):
 
 def _is_low_contextual_value(soup_text, soup_tags):
     # tokenizes all of the text inside a html 
-    text_stripped = re.sub("[^A-Za-z0-9\s]+", "", soup_text)
-    text_tokens = nltk.word_tokenize(text_stripped)
+    text_tokens = _custom_tokenize(soup_text)
 
     # compares the lengths to determine if low context
     # if rate < 95% for text-to-HTML, it is low context
@@ -150,8 +149,14 @@ def _is_low_contextual_value(soup_text, soup_tags):
     if total_length == 0:
         return True  # handle cases with no content by considering them low context
 
-    text_ratio = len(token_list) / total_length
-    html_ratio = len(tag_list) / total_length
+    text_ratio = len(text_tokens) / total_length
+    html_ratio = len(soup_tags) / total_length
 
     # return true if the HTML or text ratio indicates low context
-    return not (text_ratio > threshold or html_ratio > threshold)
+    return not (text_ratio > .95 or html_ratio > .95)
+
+def _custom_tokenize(text):
+    # use regex to split the text into tokens
+    # this regex will match words and ignore punctuation
+    # acts a replacement to nltk
+    return re.findall(r'\b\w+\b', text)
