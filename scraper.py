@@ -4,8 +4,7 @@ from urllib.parse import urlparse
 from bs4 import BeautifulSoup, Comment
 from database import Database as db
 from robot_parser import RobotParser 
-# import nltk
-# nltk.download('punkt')
+from hash_content import ContentHashManager
 
 # list of valid domains to check for
 valid_domains = [
@@ -17,6 +16,35 @@ valid_domains = [
 ]
 
 def scraper(url, resp):
+    # checks for duplicates
+    # Check if resp is valid and has a raw_response
+    if not resp or resp.raw_response is None:
+        print(f"No valid response received for URL: {url}")
+        return []  # Skip this URL or handle the error appropriately
+
+    # Now check if raw_response has content
+    if resp.raw_response.content is None:
+        print(f"No content in response for URL: {url}")
+        return []  # Skip this URL or handle the error appropriately
+
+        
+    hash_manager = ContentHashManager()
+    content_hash = hash_manager.generate_hash(resp.raw_response.content)
+    if hash_manager.is_duplicate(url, content_hash):
+        print("A DUPLICATE IS FOUND")
+        db.blacklist_links.add(url)
+        return list()
+
+    # checks for /events to check for calendar trap
+    if "/events" in url:
+        if len(db.events_links) < 300:
+            db.events_links.add(url)
+            print(f"EVENTS ADDED - CURRENT LENGTH: {len(db.events_links)}")
+        else: 
+            print("EVENTS EXCEEDED")
+            return list()
+
+    # continues if the content of the url is unique
     links = extract_next_links(url, resp)
     valid_links = []
     robot_parsers = {}
@@ -64,6 +92,12 @@ def extract_next_links(url, resp):
 
     soup_obj = BeautifulSoup(resp.raw_response.content, "html.parser")
 
+    # ensures that calendar days with no content are ignored
+    if url in db.events_links and "no" in soup_obj.get_text(strip=True).lower():
+        db.blacklist_links.add(url)
+        print("NO RESULTS")
+        return list()
+
     # removes all comment from the html file
     for comment in soup_obj.find_all(text = lambda text: isinstance(text, Comment)):
         comment.extract()
@@ -75,12 +109,6 @@ def extract_next_links(url, resp):
     # gets the actual text inside the HTML file
     raw_text = soup_obj.get_text(strip=True)
     main_text = re.sub(r"[^A-Za-z0-9\s]+", "", raw_text)
-
-    print(f"LENGTH OF THE MAIN TEXT: {len(main_text)}")
-    # # checks if the file has low contextual value
-    # if len(main_text) < 150: ## TODO: change this to at 2000 or 3000 / 6987 and 6078 and 6048 and 6087 / ends with .ical -> blank page
-    #     db.blacklist_links.add(url)
-    #     return list()
 
     if not _is_low_contextual_value(main_text, soup_obj.find_all()):
         db.blacklist_links.add(url)
@@ -117,7 +145,9 @@ def is_valid(url):
         if any(substring in url for substring in ("?share=", "pdf", "redirect", "#comment", "#respond", "#comments")):
             return False
 
-        # add another if to check if the url is allowed to be crawled based on the robots.txt?
+        if url.endswith("ical=1"): # this is to avoid the link that downsloads the calendar
+            print("detected calendar download link")
+            return False
         
         if re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
@@ -131,7 +161,8 @@ def is_valid(url):
         
         # url is valid if it passes all the conditions above
         # url can be added to the scraped
-        db.crawled_links.add(url)
+        if (url):
+            db.crawled_links.add(url)
 
         return True
 

@@ -5,6 +5,7 @@ class Database:
     crawled_links = set() # keeps track of the URLs that have been crawled
     unique_links = set() # keeps track of all the unique ones, removes the fragment
     blacklist_links = set() # keeps track of all sites to completely avoid due to either being low content or being a trap
+    events_links = set() # keeps track of all the links with the /events to avoid the calendar trap
 
     @classmethod
     def find_unique_links(cls, soup_obj):
