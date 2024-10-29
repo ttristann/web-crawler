@@ -7,13 +7,13 @@ from robot_parser import RobotParser
 from hash_content import ContentHashManager
 
 # list of valid domains to check for
-valid_domains = [
-    "ics.uci.edu",
-    "cs.uci.edu",
-    "informatics.uci.edu",
-    "stat.uci.edu",
-    "today.uci.edu/department/information_computer_sciences"
-]
+# valid_domains = [
+#     ".ics.uci.edu",
+#     ".cs.uci.edu",
+#     ".informatics.uci.edu",
+#     ".stat.uci.edu",
+#     ".today.uci.edu/department/information_computer_sciences"
+# ]
 
 def scraper(url, resp):
     # checks for duplicates
@@ -51,21 +51,21 @@ def scraper(url, resp):
 
     for link in links:
         if is_valid(link):
-            # get the root domain of the current link
-            root_domain = f"{urlparse(link).scheme}://{urlparse(link).netloc}"
+            # # get the root domain of the current link
+            # root_domain = f"{urlparse(link).scheme}://{urlparse(link).netloc}"
 
-            # check if RobotParser for this root domain already exists
-            if root_domain not in robot_parsers:
-                robot_parsers[root_domain] = RobotParser(root_domain)  # create and cache the RobotParser
+            # # check if RobotParser for this root domain already exists
+            # if root_domain not in robot_parsers:
+            #     robot_parsers[root_domain] = RobotParser(root_domain)  # create and cache the RobotParser
 
-            current_robot = robot_parsers[root_domain]
+            # current_robot = robot_parsers[root_domain]
 
-            # check if link is allowed by robots.txt and add to valid links if so
-            if current_robot.is_allowed(link):
-                valid_links.append(link)
+            # # check if link is allowed by robots.txt and add to valid links if so
+            # if current_robot.is_allowed(link):
+            valid_links.append(link)
 
-            # append sitemaps (once per domain) to valid_links
-            valid_links.extend(current_robot.sitemaps)
+            # # append sitemaps (once per domain) to valid_links
+            # valid_links.extend(current_robot.sitemaps)
 
     return valid_links
 
@@ -136,8 +136,11 @@ def is_valid(url):
         if parsed.scheme not in set(["http", "https"]): # ensures that it is using a secure scheme
             return False
         
-        if parsed.netloc not in valid_domains: 
+        # if parsed.netloc not in valid_domains: 
+        #     return False
+        if not re.match('\S*.ics.uci.edu$|\S*.cs.uci.edu$|\S*.informatics.uci.edu$|\S*.stat.uci.edu$', parsed.netloc):
             return False
+        
 
         if url in db.blacklist_links: 
             return False
