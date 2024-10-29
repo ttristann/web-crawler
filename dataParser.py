@@ -52,8 +52,8 @@ class Parser:
 
     #
     def fileSimilarity(self,tokens1, tokens):
-        tokens1 = computeWordFrequencies(tokenize(file1)) # O(n) + O(n)
-        tokens2 = computeWordFrequencies(tokenize(file2)) # O(n) + O(n)
+        tokens1 = self.computeWordFrequencies(self.tokenize(self.file1)) # O(n) + O(n)
+        tokens2 = self.computeWordFrequencies(self.tokenize(self.file2)) # O(n) + O(n)
         final = [] #purely for testing purposes
         smallest = tokens1
         biggest = tokens2
