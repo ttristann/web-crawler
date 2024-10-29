@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup, Comment
 from database import Database as db
 from robot_parser import RobotParser 
 from hash_content import ContentHashManager
+from dataParser import Parser
 
 # list of valid domains to check for
 # valid_domains = [
@@ -14,6 +15,8 @@ from hash_content import ContentHashManager
 #     ".stat.uci.edu",
 #     ".today.uci.edu/department/information_computer_sciences"
 # ]
+
+wordCount = Parser()
 
 def scraper(url, resp):
     # checks for duplicates
@@ -92,11 +95,20 @@ def extract_next_links(url, resp):
 
     soup_obj = BeautifulSoup(resp.raw_response.content, "html.parser")
 
+
+
+
+
+
+
     # ensures that calendar days with no content are ignored
     if url in db.events_links and "no" in soup_obj.get_text(strip=True).lower():
         db.blacklist_links.add(url)
         print("NO RESULTS")
         return list()
+
+
+    # print(soup_obj.get_text(strip=True))
 
     # removes all comment from the html file
     for comment in soup_obj.find_all(text = lambda text: isinstance(text, Comment)):
@@ -105,10 +117,15 @@ def extract_next_links(url, resp):
     # removes all <script> and <style> tags
     for tag_element in soup_obj.find_all(['script', 'style']):  
         tag_element.extract()
+    
 
     # gets the actual text inside the HTML file
     raw_text = soup_obj.get_text(strip=True)
     main_text = re.sub(r"[^A-Za-z0-9\s]+", "", raw_text)
+
+
+
+
 
     if not _is_low_contextual_value(main_text, soup_obj.find_all()):
         db.blacklist_links.add(url)
@@ -122,7 +139,16 @@ def extract_next_links(url, resp):
         current_link = link.get('href')
         full_link = urlparse(current_link).geturl()
         main_set.add(full_link)
-    
+
+
+
+    if(soup_obj.find('title')):
+        soup_obj.find('title').decompose() #remove title header, makes word count more accurate
+        wordCount.tokenize(soup_obj.get_text(), url)
+
+
+
+
     return list(main_set)
 
 def is_valid(url):
