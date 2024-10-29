@@ -51,21 +51,21 @@ def scraper(url, resp):
 
     for link in links:
         if is_valid(link):
-            # # get the root domain of the current link
-            # root_domain = f"{urlparse(link).scheme}://{urlparse(link).netloc}"
+            # get the root domain of the current link
+            root_domain = f"{urlparse(link).scheme}://{urlparse(link).netloc}"
 
-            # # check if RobotParser for this root domain already exists
-            # if root_domain not in robot_parsers:
-            #     robot_parsers[root_domain] = RobotParser(root_domain)  # create and cache the RobotParser
+            # check if RobotParser for this root domain already exists
+            if root_domain not in robot_parsers:
+                robot_parsers[root_domain] = RobotParser(root_domain)  # create and cache the RobotParser
 
-            # current_robot = robot_parsers[root_domain]
+            current_robot = robot_parsers[root_domain]
 
-            # # check if link is allowed by robots.txt and add to valid links if so
-            # if current_robot.is_allowed(link):
-            valid_links.append(link)
+            # check if link is allowed by robots.txt and add to valid links if so
+            if current_robot.is_allowed(link):
+                valid_links.append(link)
 
-            # # append sitemaps (once per domain) to valid_links
-            # valid_links.extend(current_robot.sitemaps)
+            # append sitemaps (once per domain) to valid_links
+            valid_links.extend(current_robot.sitemaps)
 
     return valid_links
 

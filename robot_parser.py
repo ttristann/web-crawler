@@ -14,10 +14,15 @@ class RobotParser:
     
     def get_robots_content(self):
         # fetch and parse robots.txt
-        response = requests.get(self.robot_url)
-        if response.status_code != 200:
-            return [], []
+        print("ROBOT URL", self.robot_url)
+        try:
+            response = requests.get(self.robot_url)
+        except Exception as e:
+            # Most likely SSLError, we aren't allowed/couldn't access robots.txt of url
+            # Assigning self.disallowed_paths, self.sitemaps = [],[] because there is no info to use
+            return [], [] 
         
+
         main_robot_txt = response.text
 
         # use regex to parse the robots.txt for disallowed paths and sitemaps
@@ -32,6 +37,7 @@ class RobotParser:
 
     def is_allowed(self, url):
         # check if the URL path matches any disallowed paths
+        # If disallowed paths are empty, then we 
         parsed_url = urlparse(url)
         for path in self.disallowed_paths:
             if parsed_url.path.startswith(path):
