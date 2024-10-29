@@ -45,27 +45,11 @@ def scraper(url, resp):
             return list()
 
     # continues if the content of the url is unique
-    links = extract_next_links(url, resp)
+    all_unique_links = extract_next_links(url, resp)
     valid_links = []
-    robot_parsers = {}
 
-    for link in links:
+    for link in all_unique_links:
         if is_valid(link):
-            print(link)
-            # get the root domain of the current link
-            # root_domain = f"{urlparse(link).scheme}://{urlparse(link).netloc}"
-
-            # check if RobotParser for this root domain already exists
-            # if root_domain not in robot_parsers:
-            #     robot_parsers[root_domain] = RobotParser(root_domain)  # create and cache the RobotParser
-
-            # current_robot = robot_parsers[root_domain]
-
-            # check if link is allowed by robots.txt and add to valid links if so
-            # if current_robot.is_allowed(link):
-            #     valid_links.append(link)
-
-            # append sitemaps (once per domain) to valid_links
             valid_links.append(link)
 
     return valid_links
@@ -117,14 +101,15 @@ def extract_next_links(url, resp):
 
     ### TODO: need to accomodate to find unique links with fragments while using the database class
     ### this code has to stay here -> urlparse has be called here if not, it goes into error that i dont know how to fix
-    main_set = set() # collects all of the links to be crawled
+    # main_set = set() # collects all of the links to be crawled
     # iterates through soup obj to find and filter through the links
-    for link in soup_obj.find_all('a'):
-        current_link = link.get('href')
-        full_link = urlparse(current_link).geturl()
-        main_set.add(full_link)
+    # for link in soup_obj.find_all('a'):
+    #     current_link = link.get('href')
+    #     full_link = urlparse(current_link).geturl()
+    #     main_set.add(full_link)
     
-    return list(main_set)
+    all_unique_links = db.find_unique_links(soup_obj)
+    return list(all_unique_links)
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
@@ -139,10 +124,8 @@ def is_valid(url):
         
         # if parsed.netloc not in valid_domains: 
         #     return False
-        if not re.match('\S*.ics.uci.edu$|\S*.cs.uci.edu$|\S*.informatics.uci.edu$|\S*.stat.uci.edu$|\S*today.uci.edu/department/information_computer_sciences$', parsed.netloc):
+        if not re.match(r'^(?:[\w-]+\.)*(ics\.uci\.edu|cs\.uci\.edu|informatics\.uci\.edu|stat\.uci\.edu|today\.uci\.edu/department/information_computer_sciences)$', parsed.netloc):
             return False
-
-        
 
         if url in db.blacklist_links: 
             return False

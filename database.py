@@ -13,13 +13,11 @@ class Database:
         # iterates through soup obj to find and filter through the links
         for link in soup_obj.find_all('a'):
             current_link = link.get('href')
-            if current_link: # removes fragment
+            if current_link: # removes fragment if current link is not empty string
                 parsed_link = urlparse(current_link)
-                link_without_fragment = urlunparse(parsed_link._replace(fragment=''))
-                cls.unique_links.add(link_without_fragment)
-                main_set.add(parsed_link)
+                link_without_fragment = urlunparse(parsed_link._replace(fragment='')) # defragmented version
+                if (link_without_fragment not in cls.unique_links):
+                    main_set.add(parsed_link)
+                    cls.unique_links.add(link_without_fragment)
 
         return main_set
-
-    
-
