@@ -138,7 +138,7 @@ def is_valid(url):
         
         # if parsed.netloc not in valid_domains: 
         #     return False
-        if not re.match('\S*.ics.uci.edu$|\S*.cs.uci.edu$|\S*.informatics.uci.edu$|\S*.stat.uci.edu$', parsed.netloc):
+        if not re.match('\S*.ics.uci.edu$|\S*.cs.uci.edu$|\S*.informatics.uci.edu$|\S*.stat.uci.edu$|\S*today.uci.edu/department/information_computer_sciences$', parsed.netloc):
             return False
         
 
