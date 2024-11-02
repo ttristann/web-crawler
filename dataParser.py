@@ -4,11 +4,11 @@ import sys
 class Parser:
 
     def __init__(self):
-        self.totalData = {}
-        self.finalDict = {}
+        self.count_per_word = {} # {word: count, ...}
+        self.url_total_words = {} # {url: total word count}
 
     # reads through each line of text file and tokenizes words
-    def tokenize(self,url, stringDoc):
+    def tokenize(self,stringDoc, url):
             tokens = []
             word = ""
 
@@ -21,58 +21,39 @@ class Parser:
                     tokens.append(word)
                     word = ""
  
-            self.computeWordFrequencies(tokens)
+            self.computeWordFrequencies(tokens, url)
+
 
 
     #creates dictionary updates final Dict with new words
-    def computeWordFrequencies(self,tokens):
+    def computeWordFrequencies(self,tokens, url):
         stop_words = {
         "i", "a", "about","an","are","as","at","be","by","com","for", "from",
         "how","in","is","it","of","on","or","that","the","this",
         "to","was","what","when","where","who","will","with","www"}
-
+        count = 0
         for word in tokens: #iterate through each "token"
             if(word not in stop_words): #ensure word is not a stop word. 
-
                 # add content 
-                if (word in self.finalDict): 
-                    self.finalDict[word] += 1
+                if (word in self.count_per_word): 
+                    self.count_per_word[word] += 1
                 else:
-                    self.finalDict[word] = 1
-
-        print(self.finalDict)
-
-
-    # sorts data. First elements are most word counts
-    
-    def displayCount(wordCounts):
-        finalData = sorted(wordCounts.items(), key=lambda tokens:(-tokens[-1], tokens[0])) #https://www.freecodecamp.org/news/sort-dictionary-by-value-in-python/
-        for pair in finalData:
-            print(f"{pair[0]} -> {pair[1]}")
-
-    #
-    def fileSimilarity(self,tokens1, tokens):
-        tokens1 = self.computeWordFrequencies(self.tokenize(self.file1)) # O(n) + O(n)
-        tokens2 = self.computeWordFrequencies(self.tokenize(self.file2)) # O(n) + O(n)
-        final = [] #purely for testing purposes
-        smallest = tokens1
-        biggest = tokens2
-
-        # because we are checking similar words, we can iterate through the smaller dictionary to reduce
-        # some run time. ex:{1,2} vs {1,2,3,4,5,6,7,8,9,10}, Why iterate through all 10 if the most common
-        # words share between both dictionaries is dic 2. Len() is O(1) time.
-
-        if len(tokens2) < len(tokens1):
-            smallest = tokens2
-            biggest = tokens1
-
-        count = 0
-        for key,value in smallest.items(): #O(n)
-            if key in biggest:
-                final.append(key)
+                    self.count_per_word[word] = 1
                 count += 1
-        return count
+                
+        self.url_total_words[url] = count
 
-    #finalDict will hold the ultimate sized dictionary with every word
-    #this function simply adds the words from second into finalDict
+  
+
+    def getURLTotalWords(self):
+        return self.url_total_words
+    
+    def getMaxWordsUrl(self):
+        return sorted(self.url_total_words.items(), key=lambda x: (-x[1], x[0]))[0]
+    
+    def getTopFifty(self):
+        # sorts data. First elements are most word counts
+        return sorted(self.count_per_word.items(), key=lambda tokens:(-tokens[1], tokens[0]))[:50]
+
+
 

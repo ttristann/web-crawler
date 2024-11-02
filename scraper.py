@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup, Comment
 from database import Database as db
 from robot_parser import RobotParser 
 from hash_content import ContentHashManager
+from dataParser import Parser
 
 # list of valid domains to check for
 # valid_domains = [
@@ -14,6 +15,8 @@ from hash_content import ContentHashManager
 #     ".stat.uci.edu",
 #     ".today.uci.edu/department/information_computer_sciences"
 # ]
+
+wordCount = Parser()
 
 def scraper(url, resp):
     # checks for duplicates
@@ -83,6 +86,9 @@ def extract_next_links(url, resp):
         print("NO RESULTS")
         return list()
 
+
+    # print(soup_obj.get_text(strip=True))
+
     # removes all comment from the html file
     for comment in soup_obj.find_all(text = lambda text: isinstance(text, Comment)):
         comment.extract()
@@ -90,6 +96,7 @@ def extract_next_links(url, resp):
     # removes all <script> and <style> tags
     for tag_element in soup_obj.find_all(['script', 'style']):  
         tag_element.extract()
+    
 
     # gets the actual text inside the HTML file
     raw_text = soup_obj.get_text(strip=True)
@@ -107,8 +114,14 @@ def extract_next_links(url, resp):
     #     current_link = link.get('href')
     #     full_link = urlparse(current_link).geturl()
     #     main_set.add(full_link)
-    
+
     all_unique_links = db.find_unique_links(soup_obj)
+
+    if(soup_obj.find('title')):
+        soup_obj.find('title').decompose() #remove title header, makes word count more accurate
+        wordCount.tokenize(soup_obj.get_text(), url)
+
+
     return list(all_unique_links)
 
 def is_valid(url):
