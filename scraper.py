@@ -51,22 +51,22 @@ def scraper(url, resp):
 
     for link in links:
         if is_valid(link):
-            # get the root domain of the current link
-            root_domain = f"{urlparse(link).scheme}://{urlparse(link).netloc}"
+            # # get the root domain of the current link
+            # root_domain = f"{urlparse(link).scheme}://{urlparse(link).netloc}"
 
-            # check if RobotParser for this root domain already exists
-            if root_domain not in robot_parsers:
-                robot_parsers[root_domain] = RobotParser(root_domain)  # create and cache the RobotParser
+            # # check if RobotParser for this root domain already exists
+            # if root_domain not in robot_parsers:
+            #     robot_parsers[root_domain] = RobotParser(root_domain)  # create and cache the RobotParser
 
-            current_robot = robot_parsers[root_domain]
+            # current_robot = robot_parsers[root_domain]
 
-            # check if link is allowed by robots.txt and add to valid links if so
-            if current_robot.is_allowed(link):
-                valid_links.append(link)
+            # # check if link is allowed by robots.txt and add to valid links if so
+            # if current_robot.is_allowed(link):
+            valid_links.append(link)
 
-            # append sitemaps (once per domain) to valid_links
-            valid_links.extend(current_robot.sitemaps)
-
+            # # append sitemaps (once per domain) to valid_links
+            # valid_links.extend(current_robot.sitemaps)
+    # print(f"CURRENT LENGTH OF CRAWLED LINKS: {len(db.crawled_links)} --------------------------------") # noticed that when the crawler gets interuppted, it loses track of some of crawled links
     return valid_links
 
 def extract_next_links(url, resp):
@@ -138,7 +138,9 @@ def is_valid(url):
         
         # if parsed.netloc not in valid_domains: 
         #     return False
-        if not re.match('\S*.ics.uci.edu$|\S*.cs.uci.edu$|\S*.informatics.uci.edu$|\S*.stat.uci.edu$|\S*today.uci.edu/department/information_computer_sciences$', parsed.netloc):
+        # if not re.match('\S*.ics.uci.edu$|\S*.cs.uci.edu$|\S*.informatics.uci.edu$|\S*.stat.uci.edu$|\S*today.uci.edu/department/information_computer_sciences$', parsed.netloc):
+        url_pattern = r'^(https?://)?([a-zA-Z0-9-]+\.)?(ics\.uci\.edu|cs\.uci\.edu|informatics\.uci\.edu|stat\.uci\.edu|today\.uci\.edu/department/information_computer_sciences)/.*$'
+        if not re.match(url_pattern, parsed.netloc):
             return False
         
 

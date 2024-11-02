@@ -14,7 +14,7 @@ class RobotParser:
     
     def get_robots_content(self):
         # fetch and parse robots.txt
-        print("ROBOT URL", self.robot_url)
+        # print("ROBOT URL", self.robot_url)
         try:
             response = requests.get(self.robot_url)
         except Exception as e:
