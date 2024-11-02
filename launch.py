@@ -5,7 +5,6 @@ from utils.server_registration import get_cache_server
 from utils.config import Config
 from crawler import Crawler
 from scraper import wordCount
-from report import Report
 
 def main(config_file, restart):
     global wordCount
