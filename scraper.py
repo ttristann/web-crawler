@@ -108,21 +108,22 @@ def extract_next_links(url, resp):
 
     ### TODO: need to accomodate to find unique links with fragments while using the database class
     ### this code has to stay here -> urlparse has be called here if not, it goes into error that i dont know how to fix
-    # main_set = set() # collects all of the links to be crawled
+    main_set = set() # collects all of the links to be crawled
     # iterates through soup obj to find and filter through the links
-    # for link in soup_obj.find_all('a'):
-    #     current_link = link.get('href')
-    #     full_link = urlparse(current_link).geturl()
-    #     main_set.add(full_link)
+    for link in soup_obj.find_all('a'):
+        current_link = link.get('href')
+        if current_link:
+            full_link = urlparse(current_link).geturl()
+            main_set.add(full_link)
 
-    all_unique_links = db.find_unique_links(soup_obj)
+    # all_unique_links = db.find_unique_links(soup_obj)
 
     if(soup_obj.find('title')):
         soup_obj.find('title').decompose() #remove title header, makes word count more accurate
         wordCount.tokenize(soup_obj.get_text(), url)
 
 
-    return list(all_unique_links)
+    return list(main_set)
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
